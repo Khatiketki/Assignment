@@ -1,0 +1,85 @@
+# Week 5: FlashAttention with CuTe — Summary & Output
+
+## Assignment
+Reimplement FlashAttention Algorithm 1 using the **CuTe library**.
+
+---
+
+## Output
+
+```
+======================================================
+  FlashAttention - CuTe (Week 5)
+  N=512  d=64  kBr=32  kBc=32
+======================================================
+  Device : Tesla T4
+  SMEM   : 36.2 KB needed / 48.0 KB available
+  Grid : 16 blocks x 32 threads
+
+  Completed successfully!
+  O[0][0:5] = [-0.0256, -0.0362,  0.0380,  0.0560,  0.0149]
+  L[0:5]    = [ 6.2441,  6.2995,  6.2975,  6.2983,  6.3105]
+======================================================
+```
+
+---
+
+## What Was Built
+
+A single Modal file `flash_attention_cute_modal.py` containing a CUDA kernel that reimplements FlashAttention Algorithm 1 using CuTe.
+
+### CuTe Concepts Used
+
+| Concept | How it was used |
+|---|---|
+| `make_layout(shape, stride)` | Row-major layout `(N, 64):(64, 1)` for Q/K/V/O |
+| `make_tensor(ptr, layout)` | Bound HBM pointers to layouts — zero-copy views |
+| `local_tile(tensor, tile, coord)` | Extracted per-block Q/O tile and per-iteration K/V tile |
+| `make_smem_ptr` | Same Layout abstraction applied to shared memory |
+
+### Algorithm
+
+Each CUDA block processes one `kBr=32` row-tile of Q:
+
+1. Load `Qi` tile into shared memory
+2. For each KV tile `j`:
+   - Load `Kj`, `Vj` into shared memory
+   - Compute `Sij = Qi * Kj^T * scale`
+   - Online softmax: update running `mi`, `li` per row
+   - Rescale `Oi` and accumulate `Pij * Vj`
+3. Write `Oi` and `Li = mi + log(li)` back to HBM
+
+### Online Softmax Update (Algorithm 1)
+
+```
+m_new = max(m_old, rowmax(Sij))
+l_new = l_old * exp(m_old - m_new) + rowsum(exp(Sij - m_new))
+O     = (O * l_old * exp(m_old - m_new) + exp(Sij - m_new) * Vj) / l_new
+```
+
+---
+
+## Infrastructure
+
+| Item | Value |
+|---|---|
+| File | `flash_attention_cute_modal.py` |
+| GPU | NVIDIA Tesla T4 (sm_75) |
+| CUDA | 12.4.0 |
+| CuTe | CUTLASS v3.5.0 |
+| Compiler flags | `nvcc -O2 -std=c++17 -arch=sm_75` |
+| Shared memory | 36.2 KB / 48.0 KB limit |
+| Grid | 16 blocks × 32 threads |
+| Platform | Modal cloud |
+
+---
+
+## Run Command
+
+```bash
+python -m modal run flash_attention_cute_modal.py
+```
+
+---
+
+**Status: ✅ Complete**
