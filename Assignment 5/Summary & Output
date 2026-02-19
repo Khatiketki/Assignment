@@ -30,12 +30,12 @@ A single Modal file `flash_attention_cute_modal.py` containing a CUDA kernel tha
 
 ### CuTe Concepts Used
 
-| Concept | How it was used |
-|---|---|
-| `make_layout(shape, stride)` | Row-major layout `(N, 64):(64, 1)` for Q/K/V/O |
-| `make_tensor(ptr, layout)` | Bound HBM pointers to layouts — zero-copy views |
+| Concept                           | How it was used                                         |
+|-----------------------------------|---------------------------------------------------------|
+| `make_layout(shape, stride)`      | Row-major layout `(N, 64):(64, 1)` for Q/K/V/O          |
+| `make_tensor(ptr, layout)`        | Bound HBM pointers to layouts — zero-copy views         |
 | `local_tile(tensor, tile, coord)` | Extracted per-block Q/O tile and per-iteration K/V tile |
-| `make_smem_ptr` | Same Layout abstraction applied to shared memory |
+| `make_smem_ptr`                   | Same Layout abstraction applied to shared memory        |
 
 ### Algorithm
 
@@ -61,16 +61,16 @@ O     = (O * l_old * exp(m_old - m_new) + exp(Sij - m_new) * Vj) / l_new
 
 ## Infrastructure
 
-| Item | Value |
-|---|---|
-| File | `flash_attention_cute_modal.py` |
-| GPU | NVIDIA Tesla T4 (sm_75) |
-| CUDA | 12.4.0 |
-| CuTe | CUTLASS v3.5.0 |
+| Item           | Value                             |
+|----------------|-----------------------------------|
+| File           | `flash_attention_cute_modal.py`   |
+| GPU            | NVIDIA Tesla T4 (sm_75)           |
+| CUDA           | 12.4.0                            |
+| CuTe           | CUTLASS v3.5.0                    |
 | Compiler flags | `nvcc -O2 -std=c++17 -arch=sm_75` |
-| Shared memory | 36.2 KB / 48.0 KB limit |
-| Grid | 16 blocks × 32 threads |
-| Platform | Modal cloud |
+| Shared memory  | 36.2 KB / 48.0 KB limit           |
+| Grid           | 16 blocks × 32 threads            |
+| Platform       | Modal cloud                       |
 
 ---
 
