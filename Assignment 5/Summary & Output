@@ -81,5 +81,3 @@ python -m modal run flash_attention_cute_modal.py
 ```
 
 ---
-
-**Status: ✅ Complete**
